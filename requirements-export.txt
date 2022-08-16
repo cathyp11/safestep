@@ -1,0 +1,2 @@
+scikit-learn==1.1.2  # CoreML quantization
+coremltools>=5.2  # CoreML export
