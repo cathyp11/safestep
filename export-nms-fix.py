@@ -1,4 +1,7 @@
 # YOLOv5 🚀 by Ultralytics, GPL-3.0 license
+# NOTE: this file was checked out from https://github.com/mshamash/yolov5/tree/fix/coreml_export_nms_layer
+# NOTE: full credit goes to https://github.com/mshamash and https://github.com/pocketpixels
+# NOTE: a PR for adding NMS support for Core ML export is pending merge: https://github.com/ultralytics/yolov5/pull/7263
 """
 Export a YOLOv5 PyTorch model to other formats. TensorFlow exports authored by https://github.com/zldrobit
 
@@ -42,6 +45,12 @@ TensorFlow.js:
     $ npm start
 """
 
+from utils.torch_utils import select_device
+from utils.general import (LOGGER, check_dataset, check_img_size, check_requirements, check_version, colorstr,
+                           file_size, print_args, url2file)
+from utils.dataloaders import LoadImages
+from models.yolo import Detect
+from models.experimental import attempt_load
 import argparse
 import json
 import os
@@ -63,13 +72,6 @@ if str(ROOT) not in sys.path:
 if platform.system() != 'Windows':
     ROOT = Path(os.path.relpath(ROOT, Path.cwd()))  # relative
 
-from models.experimental import attempt_load
-from models.yolo import Detect
-from utils.datasets import LoadImages
-from utils.general import (LOGGER, check_dataset, check_img_size, check_requirements, check_version, colorstr,
-                           file_size, print_args, url2file)
-from utils.torch_utils import select_device
-
 
 def export_formats():
     # YOLOv5 export formats
@@ -84,7 +86,7 @@ def export_formats():
         ['TensorFlow GraphDef', 'pb', '.pb', True],
         ['TensorFlow Lite', 'tflite', '.tflite', False],
         ['TensorFlow Edge TPU', 'edgetpu', '_edgetpu.tflite', False],
-        ['TensorFlow.js', 'tfjs', '_web_model', False],]
+        ['TensorFlow.js', 'tfjs', '_web_model', False], ]
     return pd.DataFrame(x, columns=['Format', 'Argument', 'Suffix', 'GPU'])
 
 
@@ -587,7 +589,7 @@ def run(
     # Load PyTorch model
     device = select_device(device)
     assert not (device.type == 'cpu' and half), '--half only compatible with GPU export, i.e. use --device 0'
-    model = attempt_load(weights, map_location=device, inplace=True, fuse=True)  # load FP32 model
+    model = attempt_load(weights, device=device, inplace=True, fuse=True)  # load FP32 model
     nc, names = model.nc, model.names  # number of classes, class names
 
     # Checks
