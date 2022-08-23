@@ -630,7 +630,7 @@ def run(
         f[3] = export_openvino(model, im, file)
     if coreml:
         nb = shape[1]
-        _, f[4] = export_coreml(model, im, file, nb, nc, names, conf_thres, iou_thres)
+        _, f[4] = export_coreml(model, im, file, nb, nc, names.values(), conf_thres, iou_thres)
 
     # TensorFlow Exports
     if any((saved_model, pb, tflite, edgetpu, tfjs)):
